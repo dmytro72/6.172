@@ -1,0 +1,9 @@
+*.gcda
+*.gcno
+*.gcov
+/isort
+*.o
+perf.data
+/pointer
+/sizes
+/swap

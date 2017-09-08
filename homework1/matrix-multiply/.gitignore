@@ -1,0 +1,6 @@
+/.buildmode
+*.gcda
+*.gcno
+*.gcov
+/matrix_multiply
+*.o
