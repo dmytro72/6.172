@@ -46,6 +46,9 @@ matrix* make_matrix(int rows, int cols) {
   new_matrix->values = (int**)malloc(sizeof(int*) * rows);
   for (int i = 0; i < rows; i++) {
     new_matrix->values[i] = (int*)malloc(sizeof(int) * cols);
+    for (int j = 0; j < cols; j++) {
+      new_matrix->values[i][j] = 0;
+    }
   }
 
   return new_matrix;
@@ -75,18 +78,18 @@ void print_matrix(const matrix* m) {
 
 // Multiply matrix A*B, store result in C.
 int matrix_multiply_run(const matrix* A, const matrix* B, matrix* C) {
-  /*
+/*
   tbassert(A->cols == B->rows,
            "A->cols = %d, B->rows = %d\n", A->cols, B->rows);
   tbassert(A->rows == C->rows,
            "A->rows = %d, C->rows = %d\n", A->rows, C->rows);
   tbassert(B->cols == C->cols,
            "B->cols = %d, C->cols = %d\n", B->cols, C->cols);
-  */
+*/
 
   for (int i = 0; i < A->rows; i++) {
-    for (int j = 0; j < B->cols; j++) {
-      for (int k = 0; k < A->cols; k++) {
+    for (int k = 0; k < A->cols; k++) {
+      for (int j = 0; j < B->cols; j++) {
         C->values[i][j] += A->values[i][k] * B->values[k][j];
       }
     }
