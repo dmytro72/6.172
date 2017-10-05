@@ -1,0 +1,71 @@
+Writeup 1:
+Median elapsed execution time: 0.049279 sec without vectorization.
+Median elapsed execution time: 0.012489 sec with vectorization (~4x faster than without vectorization).
+Median elapsed execution time: 0.008367 sec with AVX2=1 (~6x faster than without vectorization).
+The bit width of the default vector registers on awsrun machines is 128 bits because the vectorization width = 4 and we are working with 32 bit unsigned integers so 4 * 32 = 128.
+The bit width of AVX2 vector registers are 256 bits because the vectorization width is 8. 8 * 32 = 256.
+
+Writeup 2:
+paddd	8224(%rsp,%rax,4), %xmm0 is the vector add operation. 
+vpaddd	8224(%rsp,%rax,4), %ymm0, %ymm0 is the vector add operation when AVX2=1.
+
+Writeup 3:
+/ does not vectorize with VECTORIZE=1 AVX2=1 because "the cost-model indicates that interleaving is not beneficial".
+For << without AVX2, there are a lot more commands following movdqa. It calls pslld followed by a lot more instructions because shifting left by a variable amount isn't a supported vector instruction. With AVX2, the command is just a single line of vpsllvd (variable bit shift left logical)
+
+Writeup 4:
+uint64_t unvectorized: 0.051451 sec
+uint64_t vectorized: 0.025201 sec (2x speedup)
+uint64_t vectorized AVX2: 0.014939 sec (3.4x speedup)
+
+uint32_t unvectorized: 0.052071 sec
+uint32_t vectorized: 0.013109 sec (3.9x speedup)
+uint32_t vectorized AVX2: 0.007886 sec (6.6x speedup)
+
+uint16_t unvectorized: 0.051871 sec
+uint16_t vectorized: 0.007076 sec (7.33x speedup)
+uint16_t vectorized AVX2: 0.004349 sec (11.9x speedup)
+
+uint8_t unvectorized: 0.051068 sec
+uint8_t vectorized: 0.004031 sec (12.6x speedup)
+uint8_t vectorized AVX2: 0.002092 sec (24.4x speedup)
+
+Writeup 5:
+uint64_t unvectorized *: 0.049306 sec
+uint64_t vectorized AVX2 *: 0.050074 sec
+uint8_t unvectorized *: 0.057762 sec
+uint8_t vectorized AVX2 *: 0.016363 sec
+In this case, the vectorized code for uint64_t for multiplication actually ran slower than the unvectorized version.
+However, the vectorized code using a smaller width data type will still run faster, but the difference in speed is not as significant as the speedup for the + operation.
+
+Writeup 6:
+The most time for uint64_t * goes to vpmulu (vector multiply) at 30.39%. The most time consuming operation for uint64_t + is add at 37.04%. The actual vpaddq (vector add) only takes 14.81%. 
+
+Writeup 7:
+uint64_t N=1024 AVX2: 0.054894 sec
+uint64_t N=1500 AVX2: 0.077006 sec
+uint64_t N=1024 vectorized: 0.057280 sec
+uint64_t N=1500 vectorized: 0.089035 sec
+uint64_t N=1024 unvectorized: 0.057296 sec
+uint64_t N=1500 unvectorized: 0.089569 sec
+There is a dramatic change from setting N = 1024 (0.014939 sec vs. 0.054894 sec). This happens because the compiler needs to handle when to terminate since it doesn't know the size of N at compile time.
+
+Writeup 8:
+It does not vectorize. This probably happens because access to memory is no longer sequential because of striding.
+Vector loading moves multiple values from cache into registers at once, but since we are striding, we won't be moving an entire cache line so it will take multiple operations to vectorize.
+
+Writeup 9:
+Nonvectorized: 0.018082 sec.
+Vectorized NonAVX2 (width=4): 0.016896 sec 
+Vectorized NonAVX2 (width=2): 0.018083 sec
+Vectorized NonAVX2 (width=2, interleaved count=2): 0.016902 sec
+Vectorized AVX2 (width=8): 0.018955 sec
+Vectorized AVX2 (width=2): 0.018403 sec
+Vectorized AVX2 (width=2, interleaved count=2): 0.016905 sec
+Vectorized AVX2 (width=2, interleaved count=8): 0.016445 sec
+There is no speedup over nonvectorized code if you don't interleave with AVX2 but nonAVX2 has a .001 second speedup. 
+With interleaving and vectorize width of 2, there is a speedup over nonvectorized code. The best I found is interleaving count 8 and vector width of 2. 
+
+Writeup 10:
+The compiler first extracts the packed integer values, then adds them together. It then calls vpshufd, which swaps the first and second half of the register. The compiler then adds the second half of the register together. Finally, the vphaddd command horizontally adds the 2 adjacent 32 bit integers together and stores it in ymm0. 
+

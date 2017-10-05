@@ -1,0 +1,1 @@
+-Wall -g -std=gnu99 -O3 -Rpass=loop-vectorize -Rpass-missed=loop-vectorize  -S -ffast-math

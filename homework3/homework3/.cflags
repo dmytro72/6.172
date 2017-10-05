@@ -1,0 +1,1 @@
+-Wall -std=gnu99 -g -gdwarf-3 -fno-unroll-loops -O3 -DNDEBUG -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -ffast-math -S -mavx2 

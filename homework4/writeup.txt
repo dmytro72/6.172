@@ -1,0 +1,65 @@
+Writeup 1:
+  1 core: 8.050 s
+  4 cores: 16.137 s
+  8 cores: 8.044 s
+
+Writeup 2:
+I coarsened the program by running normal fib without cilk_spawn if n was less than 20.
+  1 core: 3.258 s
+  4 cores: 6.483 s
+  8 cores: 3.252 s
+
+Writeup 3:
+  1 core: 1.710 s (real), 1.297s elapsed time
+  4 cores: 0.763 s (real), 0.351s elapsed time
+  8 cores: 0.601 s (real), 0.188s elapsed time
+
+Writeup 4:
+The read/write race occurs at line 74 and 75 because there are 2 my_qsort calls and on the second one there is a read to begin and middle but the first call to my_qsort could be modifying that value when swapping middle with temp. 
+We can fix this by just doing the calculation for max(begin + 1, middle) before calling either of the my_qsort calls.
+
+Writeup 5:
+Input                 Parallelism
+10000                 4.478562
+100000                5.433167
+1000000               6.568407
+50000                 5.228724
+
+Writeup 6:
+Serial execution time: 2.331913 seconds
+N = 8 execution time: 2.828711 seconds
+Parallelization did not do what I expected because it took longer for the code to run.
+If the for loop is not commented out, the program seg faults occasionally.
+
+Writeup 7:
+Cilksan was able to find the race condition. There is a race condition in board.c because append_node modifies the size of board_list.
+However, append_node is called multiple times in queens before the cilk_sync call. This means board_list is being modified and read concurrently.
+
+Writeup 8:
+Using locks means that parts of the program must wait for a locked process to finish before continuing.
+Locks could hurt performance because it could make the program run more like a serial program and cause bottlenecks.
+
+Writeup 9:
+The most efficient way to concatenate 2 singly linked lists is to connect the pointer to the tail of the first list's next element to be the pointer to the head of the second list.
+Next, update the pointer to the tail of the first list to be the pointer to the tail of the second list.
+This can be done in O(1) time since the number of operations doesn't change with the number of elements in the list (unless a list is empty).
+
+Writeup 10:
+I created a list of empty boards to pass in to be parallelized and I merge them all at the end after cilk_sync. The parallel code runs slower than the serialized code.
+The serialized code is around 2.090 seconds but the parallelized code is 3.117 seconds.
+The parallelized code might be slower because the tasks aren't large enough for it to be worth making a spawned thread. There is probably more overhead making a new thread than running the task itself.
+
+Writeup 11:
+I chose my base case for when open_cols_bitmap < 3.
+The parallel code with coarsening runs faster than parallel code without coarsening. It ran in 2.587 seconds.
+The parallel code with coarsening compared to serial code still runs slower.
+Coarsened code runs faster because for the last few open columns, it is faster to run it in serial than to try to spawn new threads to do the calculation.
+
+Writeup 12:
+Because reducers can be safely used by multiple Cilk strands running in parallel, we don't have to worry about creating a list of temporary boards to merge together at the end.
+Since it doesn't matter what order the operations are done in, we can merge boards in any order.
+The monoid would operate on BoardList objects and the associative binary operator is merge_lists. The identity object is an empty BoardList {.head = NULL, .tail = NULL, .size = 0}.
+
+Writeup 13:
+Parallel code with reducers ran in 3.059 seconds whereas parallel code without reducers (but with coarsening) ran in 2.587 seconds. 
+

@@ -1,0 +1,1 @@
+-Wall -g -ftapir -m64  -mllvm -instrument-cilk -DCILKSCALE -O3
