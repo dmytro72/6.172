@@ -1,0 +1,24 @@
+[submodule "homework6"]
+	path = homework6
+	url = /afs/athena.mit.edu/course/6/6.172/student-repos/fa17/homeworks/homework6/mkyhuang.git
+[submodule "homework7"]
+	path = homework7
+	url = /afs/athena.mit.edu/course/6/6.172/student-repos/fa17/homeworks/homework7/mkyhuang.git
+[submodule "homework8"]
+	path = homework8
+	url = /afs/athena.mit.edu/course/6/6.172/student-repos/fa17/homeworks/homework8/mkyhuang.git
+[submodule "homework9"]
+	path = homework9
+	url = /afs/athena.mit.edu/course/6/6.172/student-repos/fa17/homeworks/homework9/mkyhuang.git
+[submodule "project1"]
+	path = project1
+	url = /afs/athena.mit.edu/course/6/6.172/student-repos/fa17/projects/project1/mkyhuang-vivzhang.git
+[submodule "project2"]
+	path = project2
+	url = /afs/athena.mit.edu/course/6/6.172/student-repos/fa17/projects/project2/mkyhuang-rzwang.git
+[submodule "project3"]
+	path = project3
+	url = /afs/athena.mit.edu/course/6/6.172/student-repos/fa17/projects/project3/mccleary-mkyhuang.git
+[submodule "project4"]
+	path = project4
+	url = /afs/athena.mit.edu/course/6/6.172/student-repos/fa17/projects/project4/mccleary-mkyhuang-rzwang-vivzhang.git
