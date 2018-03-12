@@ -1,0 +1,103 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\title{6.172 Homework 5}
+\author{Michelle Huang}
+\date{October 8, 2017}
+
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage[letterpaper, portrait, margin=1in]{geometry}
+\usepackage{listings}
+\setlength{\parskip}{1em}
+
+\begin{document}
+\maketitle
+1. Prove that a greedy scheduler achieves $T_p \leq \frac{T_1 - T_\infty}{P} + T_\infty$.
+\begin{proof}
+    Let's assume that there are $n$ incomplete steps, each costing 1 unit of work to be done. That means that the total number of complete steps cannot exceed $\frac{T_1 - n}{P}$ because $T_1 - n$ units of work are left to be done, distributed among $P$ processors. This gives us
+    $$T_p \leq \frac{T_1 - n}{P} + n$$
+    for the total amount of work done in complete steps plus the work done in incomplete steps. However, we also know that $n$ is upper bounded by the span, or the longest serial path, so we get
+    $$T_p \leq \frac{T_1 - T_\infty}{P} + T_\infty$$
+\end{proof}
+
+2. The parallelism is defined is $\frac{T_1}{T_\infty}$. $T_{4} = 100$, $T_{64} = 10$.
+\\1. By work law, $100 \geq \frac{T_1}{4}$ and $10 \geq \frac{T_1}{64}$ so $T_1 \leq 400$.
+By span law, $T_{\infty} \leq T_p$ so the longest the span could be is $10$ given this information. To get the lowest possible parallelism, we want $T_1$ to be as small as possible and $T_{\infty} = 10$. Using the inequality from problem 1, we get $100 \leq \frac{T_1 - 10}{4} + 10$ and solving this we get $T_1 \geq 370$. Thus the lowest possible parallelism is
+$$\frac{370}{10} = 37$$
+\\2. The largest possible value for $T_1$ given our information is $T_1 = 400$. Then using the equation from problem 1, we solve for $T_{\infty}$. The smallest possible value for the span is $\frac{240}{63}$. Therefore the highest possible parallelism is
+$$\frac{400}{\frac{240}{63}} = 105$$
+
+3. Using $T_{10}$'s equation, $420 \leq T_1 - T_\infty + 10T_\infty$, we get the inequality $420 \leq T_1 + 9T_\infty$. $T_{64}$'s equation and the span law tells us that $10 \geq T_\infty$. $T_4$'s equation and the work law tells us that $320 \geq T_1$. Putting these 2 inequalities back in to $T_{10}$'s equation gives
+$$420 \leq 320 + 90 = 410$$
+which is not true. Therefore the professor is either lying or incompetent.
+
+4. Matrix multiplication for $p\text{x}q$ and $q\text{x}r$ matrix can be rewritten as:
+\begin{lstlisting}
+    PARALLEL-PRODUCT(A, B, START, FINISH)
+    if START == FINISH
+        return A[START] * B[FINISH]
+    mid = math.floor((START + FINISH) / 2)
+    tempA = spawn PARALLEL-PRODUCT(A, B, START, mid)
+    tempB = PARALLEL-PRODUCT(A, B, mid + 1, FINISH)
+    sync
+    return tempA + tempB
+    
+    
+    PARALLEL-MATRIX-MULT(A, B)
+    let C be a p x r matrix initialized to all 0s
+    parallel for i = 1 to p
+        parallel for j = 1 to r
+            // Divide and conquer multiplication
+            C[i][j] = PARALLEL-PRODUCT(A[i], col j of B, 1, q)
+    return C
+\end{lstlisting}
+The work is $\theta(prq)$ and the span is $\theta(\log(p) + \log(r) + \log(q)) = \theta(\log(prq))$. The parallelism is $\theta(\frac{prq}{\log(prq)})$, which will still be highly parallel if $p$, $q$, or $r$ are 1 since $\log(x)$ approaches 0 as $x$ goes to 1.
+
+5. The Floyd-Warshall algorithm loops through $k$ from 1 to the number of vertices and calculates the shortest path from the beginning to $k-1$ so that loop should not be parallelized since we can't calculate $k$ until $k-1$ is done. Thus the parallelized algorithm should be:
+\begin{lstlisting}
+    MULTITHREADED-FLOYD-WARSHALL(W)
+    n = W.rows
+    D^0 = W
+    for k = 1 to n
+        parallel for i = 1 to n
+            parallel for j = 1 to n
+                d[i][j]^k = min(d[i][j]^(k-1), d[i][k]^(k-1) + d[k][j]^(k-1))
+    return D^n
+\end{lstlisting}
+The work done is the same as the serial version of Floyd-Warshall, $\theta(n^2)$, because you have to go through each pair of vertices. The span is $\theta(n\lg(n))$. The parallelism is then $\theta(\frac{n}{\lg(n)})$.
+
+6. (a) Let X = the associative operator
+\begin{lstlisting}
+    P-REDUCE(x, i, j)
+    if i == j
+        return x[i]
+    else
+        mid = math.floor((i + j) / 2)
+        x = spawn P-REDUCE(x, i , mid)
+        y = P-REDUCE(x, mid + 1, j)
+        sync
+        return x X y
+\end{lstlisting}
+The work is $\theta(n)$ because it follows the recurrence: $T(n) = 2T(\frac{n}{2}) + \theta(1)$. The span is $\theta(\log(n))$ because the recurrence for the span is $T(n) = T(\frac{n}{2}) + \theta(1)$. The parallelism is $\theta(\frac{\theta(n)}{\theta(\log(n))})$.
+
+(b) The work of P-SCAN-1 is $\theta(n^2)$ because it calls P-REDUCE $n$ times. The span is $\theta(\log(n))$ because the parallel for is $\theta(\log(n))$ span and the P-REDUCE is also $\theta(\log(n))$ span. The parallelism is $\theta(\frac{n^2}{\log(n)})$.
+
+(c) P-SCAN-2 is correct because it calculates the first half of the array and the second half of the array on each recursive call. It waits until both halves are done before doing the parallel for at the end that joins the first half to the second half. The base case for the array is $y[1] = x[1]$. For the recursive calls, the first half of the array should be correct because it uses one less recursive call at each step so the previous step should have calculated it. The second half of the array is correct because at each step:
+$$y[i] = x[1] X x[2] X \dotsc X x[i] = (x[1] X x[2] X \dotsc X x[k]) X (x[k + 1] X \dotsc X x[i])$$
+$$= y[k] X x[k + 1] X \dotsc X x[i]$$
+The work is $\theta(n\log(n))$ because the recurrence is $T(n) = 2T(\frac{n}{2}) + \theta(n)$ and the span is $\theta(\log^2(n))$. The parallelism is $\theta(\frac{n}{\log(n)})$.
+
+(d) line 8: return right X t[k]\\
+line 5: spawn P-SCAN-DOWN(v, x, t, y, i, k)\\
+line 6: P-SCAN-DOWN(v X t[k], x, t, y, i, k)\\
+This is correct because the base case for P-SCAN-UP is when $n=2$, then it would just return $x[2]$. For recursive calls to P-SCAN-UP, we get $t[k]$ is the first half of the array processed and right is the second half of the array processed. This divide and conquer approach is then combined in line 8 when we perform the associative operation.
+
+The return value from P-SCAN-UP is then passed on to P-SCAN-DOWN, which we need to verify is $v = x[1] X x[2] X \dotsc X x[i - 1]$. For the base case, $n=2$, then we get $v = x[1]$. For the recursive case, line 5 passes in the original $v$. For line 6, $t[k] = x[i] X \dotsc X x[k - \text{math.floor}(\frac{n}{2^l}) + 1] = x[i]$ because on the $l$ recursive step, $k$ and $i$ differ by math.floor($\frac{n}{2^l}$). This means line 6 will always return $x[i]$, which we need to prove correctness because at the end, we set $y[i] = v X x[i]$.
+
+(e) The work of P-SCAN-UP is $T(n) = 2T(\frac{n}{2}) + \theta(1) = \theta(n)$. The work of P-SCAN-DOWN is also $T(n) = 2T(\frac{n}{2}) + \theta(1) = \theta(n)$. Thus the total work is $\theta(n)$. The span of P-SCAN-UP and P-SCAN-DOWN are both $T_{\infty}(n) = T_{\infty}(\frac{n}{2}) + O(1) = \theta(\lg(n))$ so the total span is $\theta(\lg(n))$. That gives a parallelism of $\theta(\frac{n}{\lg(n)})$ for P-SCAN-3.
+
+
+\end{document}
+
