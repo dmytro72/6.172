@@ -1,0 +1,19 @@
+Priority EstHrs ActHrs     Task
+--------------------------------
+    0       2     2.5  illegal moves
+    0       1     0.5  sample "fire"
+    0       1       1  record games            }  
+    0       3       3  replay games            } Make protocol stateless
+    0       2?         parse PGN to use in replay
+    0       3       2  browse games            }
+    0       1     0.5  undo                    }
+              
+    1       4          click to move
+    1       1     0.5  blown-away piece
+    1       4          bot-bot GUI (real time)
+    1       2          flip board
+    1       4          human-human GUI
+              
+    2       4    done? board rep
+    2      16          server
+    2       8       2+ pretty-up the webpage

@@ -1,0 +1,118 @@
+Project 2 Writeup Questions
+By Rose Wang & Michelle Huang
+Writeup 1
+Submitting Job: ./screensaver 1000
+Waiting for job to finish...
+
+
+==== Standard Output ====
+Number of frames = 1000
+Input file path is: input/mit.in
+---- RESULTS ----
+Elapsed execution time: 15.362909s
+170 Line-Wall Collisions
+2097 Line-Line Collisions
+---- END RESULTS ----
+
+
+Writeup 2
+When a line does not fit into a quadtree’s sub-quadrants, we count that line as a “giant” line that exists in the current quadtree, but not in the current quadtree’s subchildren. Basically a line exists in a quadtree when the entire line fits into the quadtree. 
+
+
+When checking if lines intersect with a line that does not fit into a leaf quadtree, we can just compare that single large line with every other line in the quadtree that contains it. This would be an O(n) operation instead of O(n2) operation. 
+Writeup 3
+170 Line-Wall Collisions
+2097 Line-Line Collisions
+Writeup 4
+For “./screensaver 1000 input/mit.in”
+Original time : 15.362909 s
+Quadtree time: 4.836449 s
+The speedup is approximately 3x faster. This is expected since we are dividing the number of comparisons into 4 quadrants, but we must account for the giant lines that span more than 1 quadrant. Those require comparisons with all the lines in all 4 quadrants.
+Writeup 5
+QuadTreeNode fields:
+* Line** all_lines_on_level (every line that fits in this quadrant level)
+* Unsigned int num_all_lines
+* Line** giant_lines (lines that span across 2 or more sub-quadrants of this quadrant)
+* Unsigned int num_giant_lines
+* QuadTreeNode * top_left (pointer to top left sub-quadrant of this quadrant)
+* QuadTreeNode * top_right
+* QuadTreeNode * bottom_left
+* QuadTreeNode * bottom_right
+* Vec top_left (point that indicates top left corner boundary for this quadrant)
+* Vec top_right
+* Vec bottom_left
+* Vec bottom_right
+
+
+Starting with the entire 2D space, we count all the lines and compare that number to what we set as the maximum number of lines per quadrant. 
+If total_lines > max per quadrant:
+* partition the 2D space into 4 sub-quadrants and assign lines to each quadrant. If a line spans more than 1 quadrant, add that line to an array for “giant_lines” in this quadtree and “all_lines_on_level” for this quadrant. If a line fits inside a sub-quadrant, add that line to an array for “all_lines_on_level” for the sub-quadrant, which keeps track of all the lines in the sub-quadrants of the current quadrant. Increment the counter for all_lines_on_level and giant_lines.
+If total_lines <= max per quadrant (this is a leaf quadrant):
+* Add all of the lines into all_lines_on_level (this level will not have any giant lines). 
+
+
+For all quadrants:
+* Run the naive intersection detection algorithm on all giant_lines against all of the other lines in both the current quadtree and all of the lines in its sub-quadrants.
+* If it is not a leaf quadtree, then loop through each sub-quadrant and run the same intersection detection.
+* If it is a leaf quadtree, only run the intersection detection algorithm for all_lines_on_level since there are no giant lines (there is only 1 quadrant).
+Writeup 6
+Setting N to 2 (partitioning a lot) did not speed up the code by much because there’s too much overhead in creating and destroying so many partitions. For such few lines, it is better to just run the O(n2) algorithm. The recurrence for partitioning is T(n) = 4T(n/4) + O(1), which is O(n) work. The constant N=22 gave the best results. 
+
+
+Writeup 7
+Implementing max depth = 100 decreased the runtime to ~12.800s. Increasing the max depth to 150 did not produce any noticeable speedup so at some point, the max lines caps the depth anyways.
+Writeup 8
+1. intersectLines 
+2. intersect
+3. Vec_multiply
+4. Vec_add 
+5. Vec_makeFromLine
+6. detectCollisionsInQuadTree
+Writeup 9
+Running the gprof tool, we saw that the “intersectLines” call could use the most parallelization. Inspecting the call graph for “intersectLines”, we realized that we hit the “intersect” function many times when we count the number of collisions between the giant lines and all the other lines in the quadrant. Thus, we tried to parallelize our comparisons of the lines (in detect_collisions_giant and detect_collisions_slow) by inserting replacing the outer loop with a  cilk_for. 
+
+
+Before we could do this, our original implementation had a linked list of List pointers for each quadrant. Detecting collisions resulted in iterating the pointers from head to tail. However, this setup would not allow us to perform a “cilk_for” as mentioned above. Thus, we changed our data structure from to an array of List pointers. Currently, whenever we create a new quadrant, we allocate a new array with size equal to the total number of lines in the world since we do not know how many lines fit into the quadrant when we initially create the quadrant. This approach works for now, but we would like to find a more fine-grained approach to allocating the memory for our final submission.
+
+
+With the clik_for, we are currently running into some race conditions with the comparisons and the updates to the shared IntersectionEventList. We currently have a reducer implemented for this parallelized intersect. However, we are still hitting a race condition. This is one area that we will work on for the final submission.
+
+
+We also thought about speeding this part up by potentially storing some of the “intersect” computations between lines. Thus, we stored the vector calculation from “Vec_makeFromLine” for every line we had in the world in the Line struct. This sped up our code by ~.1 seconds.
+
+
+Another region we parallelized was the collision detection in each quadrant. Thus, we inserted cilk_spawns for the different collision detections that we did in each quadrant: 
+1. Giant lines in the quadrant vs. all the lines in the subquadrants
+2. Giant lines in the quadrant vs. the other giant lines in the quadrant
+This allowed us speed up our code from ~12.8 seconds to ~2.9 seconds. 
+
+
+We also tweaked the MAX_LINES that we could have in each quadrant that weren’t considered “giant lines” and the MAX_DEPTH of the quadtree. The numbers are in the Writeup 10. We found that MAX_LINES=75 and MAX_DEPTH=150 gave us the best speed up from ~2.9 to ~2.6 seconds.
+Writeup 10
+Max lines: 22, Max Depth: 100
+work = 4296041153, span = 2768954408, parallelism = 1.551503
+
+
+Max lines: 25, Max Depth: 150
+work = 4315287075, span = 2661475034, parallelism = 1.621389
+
+
+Max lines: 30, Max Depth: 150
+work = 4428788214, span = 2600116601, parallelism = 1.703304
+
+
+Max lines: 50, Max Depth: 150
+work = 6344911083, span = 2364241202, parallelism = 2.683699
+
+
+Max lines: 80, Max Depth = 200
+work = 9747743234, span = 2667178583, parallelism = 3.654702
+
+
+After varying both max lines and max depth, our maximum parallelism achieved was 3.65. However, using the parameters for the highest amount of parallelism did not result in the fastest runtime. 
+Writeup 11
+We tuned the max number of lines and max depth for the parallel version, which was slightly different from the optimal numbers tuned for the serial version. The parallel version worked better with higher numbers for both max number of lines and max depth. This is probably because the parallel version can run all four quadrants of a quadtree at once whereas the serial version had to do a quadrant at a time. 
+
+
+Based on our profiling, we are looking into optimizing the calculation for intersect in intersection detection. Another optimization we are looking into is to intelligently compare giant lines with the other lines since that operation takes a lot of time. Because tearing down the quadtree and rebuilding the quadtree at each time step was not the most time intensive operation, we are going to postpone trying to cleverly update lines so that we don’t have to tear down and rebuild a quadtree at each time step. 
+

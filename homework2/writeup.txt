@@ -1,0 +1,20 @@
+Writeup 1:
+Debug mode has more instructions. The advantage of using instruction count over time is that instructions are generally consistent between machines but time isn't. It might take one machine a lot longer to run one instruction than another machine running the same instruction. The disadvantage of using instruction count is that it doesn't necessarily correlate to how long it will take to run the program. Less work done doesn't mean the program runs faster, and the end goal is to check if the program runs faster.
+
+Writeup 2:
+Inserting inline did not make a huge difference in terms of runtime between sort_a and sort_i. I chose to inline merge_i instead of copy_i because merge_i calls copy_i many times. None of the combinations (inline only merge_i, inline only copy_i, inline both) made a noticeable difference. Inserting inline into util.h would have affected the runtime of both sort_a and sort_i.
+
+Writeup 3:
+A possible downside of inlining a recursive call is when it is unrolled too much because it would overflow the instruction cache so the compiler has to go disc to fetch the code. Using Cachegrind, you can check for cache misses to measure the negative effect of inlining a recursive call.
+
+Writeup 4:
+Using pointers instead of indexing into an array gave a slight increase in speed from just inlining. When run on sorting an array of 100,000 elements, sort_p is 0.000136 seconds faster than sort_i and 0.000198 seconds faster than sort_a. A pointer should theoretically be faster than indexing into an array because going through an array involves having a counter and incrementing the counter by the size of the items in the array and adding that to the address of the first element in the array. Meanwhile, a pointer just needs to be incremented by the size of the element in the array to get the next element.
+
+Writeup 5:
+I use insertion sort when the size of a sublist is less than 40. I chose 40 because I found online that insertion sort runs at 8n^2 and merge sort runs at 64nlgn, which means if you solve for n: n <= 43. If the list size is greater than 40, I use the normal merge sort code. This resulted in a performance boost of 2x the speed of just using pointers. Instead of sorting an array of 10,000 elements in 0.0001249 seconds, it sorted it in 0.000639 seconds.
+
+Writeup 6:
+sort_m runs twice as fast as sort_c, meaning it runs 4x as fast as inlining and sort_a. Running sort on 10,000 elements, sort_m ran in 0.000306 seconds, whereas sort_c ran in 0.000627 seconds. The compiler cannot automatically make this optimization for us because mem_alloc is dynamic memory allocation, which happens during runtime. The compiler does not know the size of the array we are trying to sort, therefore it doesn't know exactly how much memory it needs to allocate at compile time. 
+
+Writeup 7:
+sort_f runs in 0.008416 seconds, whereas sort_m runs in 0.011674 seconds. Using Cachegrind, sort_f's instruction count is ~40.9 million. On the other hand, the instruction count for sort_m is ~47.6 million. Running fewer unnecessary instructions will help give a performance boost since it's less likely the instruction cache will fill up and the server has less "work" to do.  

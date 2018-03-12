@@ -1,0 +1,20 @@
+cpus = 12
+book = ../tests/book.dta
+title = My funky test
+game_rounds = 50
+adjudicate = 200
+
+# now we have the player definitions
+# --
+
+player = depth_1
+invoke = ../player/myLeiserchess
+depth = 1
+
+player = depth_2
+invoke = ../player/myLeiserchess
+depth = 2
+
+player = depth_3
+invoke = ../player/myLeiserchess
+depth = 3
