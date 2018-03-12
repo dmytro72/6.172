@@ -22,3 +22,6 @@
 [submodule "project4"]
 	path = project4
 	url = /afs/athena.mit.edu/course/6/6.172/student-repos/fa17/projects/project4/mccleary-mkyhuang-rzwang-vivzhang.git
+[submodule "homework2"]
+	path = homework2
+	url = ssh://mkyhuang@athena.dialup.mit.edu/afs/athena.mit.edu/course/6/6.172/student-repos/fa17/homeworks/homework2/mkyhuang.git
