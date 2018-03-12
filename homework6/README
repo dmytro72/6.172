@@ -1,0 +1,38 @@
+=== OpenTuner ===
+OpenTuner is a general autotuning framework. If you choose to use it, then it will help your
+allocator customize itself for the given trace files. To install OpenTuner on your local AWS
+instances, run the following commands from this directory:
+$ sudo apt install python-setuptools
+$ sudo easy_install pip
+$ sudo ./install_opentuner.sh
+The install script will take ~10 minutes to run.
+
+Files you can modify:
+* opentuner_params.py - the parameters of your allocator
+
+Files you can look at:
+* opentuner_run.py - run one trace file or all trace files in a directory
+
+Useful OpenTuner options:
+$ ./opentuner_run.py -h
+      help on how to run on a trace file/directory
+$ ./opentuner_run.py --test-limit=300 --no-dups --display-frequency 20
+  --trace-file=traces/trace_c0_v0
+      example usage: run one trace file, 300 steps for optimization
+$ ./opentuner_run.py --test-limit=300 --no-dups --display-frequency 20 --trace-dir=traces
+      example usage: run on entire trace directory, 300 steps for optimization
+$ ./opentuner_run.py --test-limit=300 --no-dups --display-frequency 20 --trace-dir=traces --awsrun
+      by adding '--awsrun', the program will be running on the AWS worker machines, and the timing
+      information gathered by opentuner will be the running time on the workers. The program is by
+      default running on your local instances.
+
+Here's how to expose parameters to OpenTuner. Define them as macros in your C code, read at compile
+time. Say that FOO is a parameter that takes a value from {-1, 0, 1}. Use FOO in your code. Before
+usage, give it a default value, in case someone forgets to pass it in.
+  #ifndef FOO
+  #define FOO 0  // default value
+  #endif
+Make sure it works before trying OpenTuner.
+$ make clean mdriver PARAMS="-D FOO=1"
+Then define it for OpenTuner in opentuner_params.py and run.
+  mdriver_manipulator.add_parameter(IntegerParameter('FOO', -1, 1))  # {-1, 0, 1}

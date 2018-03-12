@@ -1,0 +1,5 @@
+Writeup 1:
+The utilization is at 51%. There is probably a lot of memory wasted because we don't use any of the space in between the end of size + HEADER_T_SIZE and the cache line. 
+
+Writeup 2:
+
